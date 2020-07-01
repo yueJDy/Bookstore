@@ -1,0 +1,190 @@
+@import '../page/page.scss';
+.clearfix::before,.clearfix::after{
+    content: " ";
+    display: table;
+}
+.clearfix::after{
+    clear: both;
+}
+.header{
+    background-image: url("../../images/header/headerbg.png");
+	.topbar{
+        height: 22px;
+        line-height: 22px;
+        a{  
+            font-size: 12px;
+            color: green;
+            &:hover{
+                text-decoration: underline;
+            }
+        }
+    }
+    .wrap{
+        position: relative;
+        height: 150px;
+        width: 1000px;
+    }
+    .topprofile{
+        float: right;
+        li{
+            display: inline-block;
+            &:first-child{
+                a{
+                    &:before{
+                        content: "";
+                        padding: 0px;
+                    }
+                }
+            }
+            a{
+                &:before{
+                    content: "|";
+                    padding-right: 15px;
+                    padding-left: 15px;
+                }
+            }
+        }
+    }
+    .logo{
+        display: block;
+        position: absolute;
+        // top: 30px;
+        bottom: 0;
+        width: 514px;
+        a{
+            background-image: url("../../images/header/logo1.png");
+            background-repeat: no-repeat;
+            display: block;
+            height: 155px;
+            text-indent: -200em;
+            width: 514px;
+        }
+    }
+    .cart{
+        display: block;
+        position: absolute;
+        height: 60px;
+        width: 60px;
+        right: 0;
+        top: 30px;
+        cursor: pointer;
+        a {
+            background-image: url('../../images/header/cart.png');
+            background-repeat: no-repeat;
+            display: block;
+            height: 60px;
+            width: 60px;
+            text-indent: -200em;
+            width: 514px;
+        }
+    }
+    .search{
+        background-color: white;
+        position: absolute;
+        right: 0;
+        bottom: 20px;
+        width: 320px;
+        border: 1px solid #ccc;
+        height: 30px;
+
+        .text{
+            width: 300px;
+            border: medium none;
+            float: left;
+            margin: 5px 0 0 8px;
+            font-size: 13px;
+            padding: 1px;
+            &::-webkit-input-placeholder{
+                color: rgb(59, 57, 57);
+                font-style: italic;
+            }
+            &:-moz-placeholder{
+                font-style: italic;
+            }
+            &::-moz-placeholder{
+                font-style: italic ;
+            }
+            &:-ms-input-placeholder{
+                color: #016600;
+                font-style: italic;
+            }
+
+        }
+        .submit{
+            background-color: white;
+            background-image: url('../../images/header/searchbg.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            border: medium none;
+            display: block;
+            height: 28px;
+            overflow: hidden;
+            position: absolute;
+            right: 0;
+            text-indent: -500em;
+            width: 30px;
+        }
+    }
+}
+ul,li{
+	list-style: none;
+	list-style-position: initial;
+    list-style-image: initial;
+    list-style-type: none;
+}
+h1{
+    display: block;
+    font-size: 2em;
+    margin-block-start: 0.67em;
+    margin-block-end: 0.67em;
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+    font-weight: bold;
+}
+
+#mainnav{
+    background-image: url("../../images/header/menubg.png");
+    .menu{
+        line-height: 40px;
+        height: 40px;
+        li{
+            position: relative;
+            width: 333px;
+            float: left;
+            font-size: 16px;
+            a{
+                color: white;
+                text-align: center;
+                display: block;
+                text-decoration: none;
+            }
+            &:hover{
+                a{
+                    background: #033801;
+                }
+                .submenu{
+                    display: block;
+                }
+            }
+        }
+    }
+    .submenu{
+        display: none;
+        background-image: url("../../images/header/menubg.png");
+        position: absolute;
+        width: 333px;
+        z-index: 100;
+        li{
+            a{
+                background:none repeat scroll 0 0 #033801;
+            }
+            &:hover{
+                a{
+                    background:rgba(0,0,0,0);
+                }
+            }
+        }
+    }
+    
+}
+

@@ -1,0 +1,111 @@
+.footer{
+    color: rgb(51, 51, 51);
+    height: 175px;
+    position: relative;
+    // transform-origin: 388px 116.5px;
+    // caret-color: rgb(51, 51, 51);
+    background-image: url("../../images/header/headerbg.png");
+    border-top: 8px solid rgba(216, 216, 216, 0.6);
+    // border-right: 0px none rgb(51, 51, 51);
+    // border-bottom: 0px none rgb(51, 51, 51);
+    // border-left: 0px none rgb(51, 51, 51);
+    // font: 12px Arial, Arial, Helvetica, sans-serif;
+    // outline: rgb(51, 51, 51) none 0px;
+}
+
+.footermenu{
+    color: rgb(51, 51, 51);
+    height: 165px;
+    column-rule-color: rgb(51, 51, 51);
+    perspective-origin: 380.234px 78px;
+    transform-origin: 380.234px 78px;
+    caret-color: rgb(51, 51, 51);
+    border: 0px none rgb(51, 51, 51);
+    outline: rgb(51, 51, 51) none 0px;
+    &::after {
+        clear: both;
+        display: table;
+        height: 0px;
+        width: 0px;
+        perspective-origin: 0px 0px;
+        transform-origin: 0px 0px;
+    }
+    &::before {
+        display: table;
+        height: 0px;
+        width: 0px;
+        perspective-origin: 0px 0px;
+        transform-origin: 0px 0px;
+    }
+
+    .col {
+        color: rgb(51, 51, 51);
+        float: left;
+        height: 156px;;
+        width: 500px;
+        column-rule-color: rgb(51, 51, 51);
+        perspective-origin: 190.109px 78px;
+        transform-origin: 190.117px 78px;
+        caret-color: rgb(51, 51, 51);
+        margin-top: 10px;
+        ul{
+            color: rgb(51, 51, 51);
+            height: 156px;
+            text-decoration: none solid rgb(51, 51, 51);
+            text-size-adjust: 100%;
+            width: 380.234px;
+            column-rule-color: rgb(51, 51, 51);
+            perspective-origin: 190.109px 78px;
+            transform-origin: 190.117px 78px;
+            caret-color: rgb(51, 51, 51);
+            border: 0px none rgb(51, 51, 51);
+            list-style: outside none none;
+            margin: 0px;
+            outline: rgb(51, 51, 51) none 0px;
+            padding: 0px;
+        }
+        li{
+            background-position: 0px 50%;
+            color: rgb(51, 51, 51);
+            height: 18px;
+            text-decoration: none solid rgb(51, 51, 51);
+            text-size-adjust: 100%;
+            width: 350.234px;
+            background-image: url("../../images/header/arricon.png");
+            background-repeat: no-repeat;
+            border-top: 0px none rgb(51, 51, 51);
+            border-right: 0px none rgb(51, 51, 51);
+            border-bottom: 1px solid rgb(194, 194, 194);
+            border-left: 0px none rgb(51, 51, 51);
+            list-style: outside none none;
+            outline: rgb(51, 51, 51) none 0px;
+            padding: 10px 0px 25px 30px;
+            font-size: 16px;
+            &::after {
+                border: 0px none rgb(51, 51, 51);
+            }
+            
+            &::before {
+                border: 0px none rgb(51, 51, 51);
+            }
+            a{
+                color: rgb(15, 87, 49);
+                text-align: left;
+                text-decoration: none solid rgb(15, 87, 49);
+                column-rule-color: rgb(15, 87, 49);
+                perspective-origin: 0px 0px;
+                transform-origin: 0px 0px;
+                caret-color: rgb(15, 87, 49);
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
