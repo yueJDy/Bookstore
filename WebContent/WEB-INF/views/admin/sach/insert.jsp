@@ -37,7 +37,7 @@
 				</p>
 				<p>
 					<label>Số trang:</label>
-					<form:input path="soTrang" type = "number" min = "1" />
+					<form:input path="soTrang" type = "number" min = "1" style = "width: 200px;height: 21px"/>
 					${ST_fail}
 				</p>
 				<p>
@@ -52,7 +52,7 @@
 				</p>
 				<p>
 					<label>Giá:</label>
-					<form:input path="gia"/>
+					<form:input path="gia" type = "number" style = "width: 200px;height: 21px"/>
 					${gia_fail}
 				</p>
 				<p>

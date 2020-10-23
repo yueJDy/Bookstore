@@ -31,6 +31,20 @@
 				</div>
 				
 			</div>
+			
+			<c:if test="${error_book == true}">
+				<div class="alert alert-danger alert-dismissible">
+				    <button type="button" class="close" data-dismiss="alert">&times;</button>
+				    <strong>Lỗi!</strong> Sách đã xoá hoặc không tồn tại.
+				</div>
+			</c:if>
+			
+			<c:if test="${message != null }">
+				<div class="alert alert-danger alert-dismissible">
+				    <button type="button" class="close" data-dismiss="alert">&times;</button>
+				    <strong>Lỗi!</strong> ${message}
+				</div>
+			</c:if>
 
 			<table>
 				<tr>
@@ -72,7 +86,16 @@
 										<!-- Modal body -->
 										<div class="modal-body">
 											<strong>Xoá ${b.tenSach}?</strong>
-											Nhấn vào <a href = "admin/sach/${b.maSach}.htm?delete">đây</a> để xoá!
+											<form action = "admin/sach/${b.maSach}.htm?delete" method = "post">
+												<p>
+													<label style="display:inline-block;">Nhập lại mật khẩu: </label>
+													<input name="password" type ="password"/>
+													
+												</p>
+												<p>
+													<input type = "submit" class = "btn" value = "Xoá"/>
+												</p>
+											</form>
 										</div>
 
 										<!-- Modal footer -->

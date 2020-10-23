@@ -43,6 +43,7 @@ public class HomeController {
 					tong = tong +  i.getSoluong()*i.getBook().getGia();
 				}
 				model.addAttribute("sizecart", list.size());
+				model.addAttribute("sum", tong);
 			}
 			else {
 				model.addAttribute("sizecart", 0);
@@ -220,16 +221,8 @@ public class HomeController {
 		
 		TestString testinput = new TestString();
 		Boolean test = true;
-		int test_tensach = testinput.test_name(search);
-		if (test_tensach != 0) {
-			test = false;
-			switch(test_tensach) {
-				case 2:{
-					model.addAttribute("search_fail", " *Vui lòng không sử dụng các ký tự đặc biệt");
-					break;
-				}
-			}
-		}
+//		String tmp1 = testinput.filter_input(search);
+//		search = tmp1;
 		if (test) {
 			String arr[] = search.split(" ");
 			int len = arr.length;
@@ -274,12 +267,12 @@ public class HomeController {
 			model.addAttribute("search", search);
 			model.addAttribute("book1", listBook);
 			model.addAttribute("book2", list2);
-			
+//			System.out.println(tmp1);
 			return "search";
 		}
 		else
+			
 			return home(model);
 	}	
 	
- 	
 }

@@ -24,8 +24,8 @@ public class DonHang {
 	private String maDonhang;
 	
 	@Column(name = "NGAY")
-	@Temporal(TemporalType.DATE)
-	@DateTimeFormat(pattern = "yyyy/MM/dd")
+	@Temporal(TemporalType.TIMESTAMP)
+	@DateTimeFormat(pattern = "yyyy/MM/dd HH:mm")
 	private Date ngay;
 	
 	@Column(name = "HOTEN")

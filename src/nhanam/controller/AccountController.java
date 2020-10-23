@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import myFunction.RandomFunc;
 import myFunction.TestString;
+import myFunction.VerifyUtils;
 import nhanam.bean.Mailer;
 import nhanam.bean.UserInfo;
 import nhanam.bean.User_Log;
@@ -93,7 +94,7 @@ public class AccountController {
 					break;
 				}
 				case 3:{
-					errors.rejectValue("password","user", " *Mật khẩu chỉ bao gồm các ký tự: ! # $ _ , - ? + * @");
+					errors.rejectValue("password","user", " *Mật khẩu chỉ bao gồm các ký tự: a-z, A-Z, 0-9, ! # $ _ , ? + * @ và không chứa khoảng trắng");
 					break;
 				}
 			}
@@ -156,8 +157,10 @@ public class AccountController {
 	}
 	
 	@RequestMapping(value = "dang-nhap", method = RequestMethod.POST)
-	public String dangnhap1(@ModelAttribute("user") User_Log user, HttpSession session,
+	public String dangnhap1(@ModelAttribute("user") User_Log user, @ModelAttribute("g-recaptcha-response") String gRecaptcha, HttpSession session,
 				ModelMap model, @RequestParam(value = "sach", defaultValue = " ") String masach, BindingResult errors) {
+		boolean valid;
+		String errorString = "";
 		Boolean test = true;
 		int test_email = testinput.test_email(user.getEmail());
 		if (test_email != 0) {
@@ -188,7 +191,7 @@ public class AccountController {
 					break;
 				}
 				case 3:{
-					errors.rejectValue("password","user", " *Mật khẩu chỉ bao gồm các ký tự: a-z, A-Z, 0-9, @#*_. ");
+					errors.rejectValue("password","user", " *Mật khẩu chỉ bao gồm các ký tự: a-z, A-Z, 0-9, ! # $ _ , ? + * @ và không chứa khoảng trắng");
 					break;
 				}
 			}
@@ -201,6 +204,13 @@ public class AccountController {
 			query.setParameter("password", user.getPassword());
 			List<User> list = query.list();
 			if (list.size() != 0) {
+				System.out.println("Recaptcha: " + gRecaptcha);
+				valid = VerifyUtils.verify(gRecaptcha);
+				if(!valid) {
+					model.addAttribute("user", user);
+					model.addAttribute("check_fail", " *Vui lòng thực hiện xác thực để tiếp tục.");
+					return "accounts/login";
+				}
 				UserInfo users = new UserInfo();
 				User userlogin = list.get(0);
 				users.setUsername(userlogin.getName());
@@ -209,7 +219,9 @@ public class AccountController {
 				users.setIsAdmin(userlogin.getIsAdmin());
 				users.setVerify(userlogin.getVerify());
 				session.setAttribute("user", users);
-				if (users.getVerify()) {
+				
+				
+				if (userlogin.getVerify()) {
 					if ( masach.length() > 1) {
 						String linktmp = (String) session.getAttribute("tmphtm");
 						session.removeAttribute("tmphtm");

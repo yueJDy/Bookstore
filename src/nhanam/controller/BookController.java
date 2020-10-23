@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import myFunction.TestString;
+import myFunction.VerifyUtils;
 import nhanam.bean.Product;
 import nhanam.bean.UserInfo;
 import nhanam.entity.Book;
@@ -44,6 +45,9 @@ public class BookController {
 	public String showBook(ModelMap model, @RequestParam("sach") String masach) {
 		Session session = factory.getCurrentSession();
 		Book book = (Book)session.get(Book.class, masach);
+		if(book == null) {
+			return "error";
+		}
 		model.addAttribute("title", book.getTenSach());
 		model.addAttribute("book", book);
 		System.out.println(book.getNgayXB());
@@ -66,6 +70,9 @@ public class BookController {
 		}
 		Session ss = factory.getCurrentSession();
 		Book book = (Book) ss.get(Book.class, masach);
+		if(book == null) {
+			return "error";
+		}
 		if (soluong <= book.getSLcon() && soluong >= 0) {
 			Product p = new Product(book, soluong);
 			if (user.getCart().size() > 0) {
@@ -117,8 +124,6 @@ public class BookController {
 			}
 		}
 		if (test) {
-
-			
 			User user1 = (User) ss.get(User.class, user.getEmail());
 			String hql = "FROM DonHang";
 			Query query = ss.createQuery(hql);
@@ -171,7 +176,7 @@ public class BookController {
 				user.removeIndex(j);
 			}
 			
-			return "redirect:/gio-hang/donhang/" + maDH + ".htm";
+			return "cart/thongbao";
 		}
 		else {
 			model.addAttribute("message","Số lượng sách không phù hợp:" + error);
@@ -191,6 +196,9 @@ public class BookController {
 		UserInfo user = (UserInfo) session.getAttribute("user");
 		Product p = user.getCart().get(stt ); 
 		Book b = (Book) ss.get(Book.class, p.getBook().getMaSach());
+		if(b == null) {
+			return "error";
+		}
 		p.setBook(b);
 		model.addAttribute("product", p);
 		model.addAttribute("index", stt);
@@ -233,8 +241,10 @@ public class BookController {
 	}
 	
 	@RequestMapping("gio-hang/thong-tin.htm")
-	public String thongtinDH(@ModelAttribute("donhang") DonHang donhang, ModelMap model, HttpSession session) {
+	public String thongtinDH(@ModelAttribute("donhang") DonHang donhang, @ModelAttribute("g-recaptcha-response") String gRecaptcha, ModelMap model, HttpSession session) {
 		model.addAttribute("donhang", donhang);
+		boolean valid;
+		String errorString = "";
 		long tong = 0;
 		UserInfo user = (UserInfo) session.getAttribute("user");
 		if (user != null) {
@@ -278,44 +288,46 @@ public class BookController {
 			}
 		}
 		
-			
-		int test_add = testinput.test_add(donhang.getDiachi());
-		if(test_add != 0) {
+		if(donhang.getDiachi().isEmpty()) {
 			test = false;
-			switch(test_add) {
-				case 1:{
-					model.addAttribute("diachi_fail", " *Vui lòng nhập địa chỉ giao hàng");
-					break;
-				}
-				case 2:{
-					model.addAttribute("diachi_fail", " *Địa chỉ chỉ bao gồm: chữ, số và các ký tự ! # $ _ , - ? + / và khoảng trắng");
-					break;
-				}
-			}
+			model.addAttribute("diachi_fail", " *Vui lòng nhập địa chỉ giao hàng");
+		}
+		else {
+			String tmp = testinput.filter_input(donhang.getDiachi());
+			donhang.setDiachi(tmp);
 		}
 		
-		int test_gc = testinput.test_str(donhang.getGhichu());
-		if(test_gc > 1 ) {
-			test = false;
-			switch(test_gc) {
-				case 2:{
-					model.addAttribute("ghichu_fail", " *Ghi chú chỉ bao gồm: chữ, số và các ký tự ! @ # $ _ , - ? + \" * . / và khoảng trắng");
-					break;
-				}
-			}
+		if(!donhang.getDiachi().isEmpty()) {
+			String tmp = testinput.filter_input(donhang.getGhichu());
+			donhang.setGhichu(tmp);
 		}
+		
 		if (test) {
-			session.setAttribute("DH", donhang);
-			return "cart/thongtinDH";
+			System.out.println("Recaptcha: " + gRecaptcha);
+			valid = VerifyUtils.verify(gRecaptcha);
+			if(!valid) {
+				model.addAttribute("donhang", donhang);
+				model.addAttribute("check_fail", " *Vui lòng thực hiện xác thực để tiếp tục.");
+				return "cart/datHang";
+			}
+			else {
+				session.setAttribute("DH", donhang);
+				return "cart/thongtinDH";
+			}
+			
 		}
 		else
 			return "cart/datHang";
+//			return "error";
 	}
 	
 	@RequestMapping("tac-gia/{maTG}")
 	public String bookTG(@PathVariable("maTG") String maTG, ModelMap model) {
 		Session session = factory.getCurrentSession();
 		TacGia tacgia = (TacGia) session.get(TacGia.class, maTG);
+		if(tacgia == null) {
+			return "error";
+		}
 		String hql = "FROM Book b WHERE b.tacgia.maTG=:maTG ORDER BY b.ngayXB DESC";
 		Query query = session.createQuery(hql);
 		query.setParameter("maTG", maTG);
@@ -335,6 +347,9 @@ public class BookController {
 	public String bookNXB(@PathVariable("maNXB") String maNXB, ModelMap model) {
 		Session session = factory.getCurrentSession();
 		NhaXB nxb = (NhaXB) session.get(NhaXB.class, maNXB);
+		if(nxb == null) {
+			return "error";
+		}
 		String hql = "FROM Book b WHERE b.nhaXB.maNXB=:maNXB ORDER BY b.ngayXB DESC";
 		Query query = session.createQuery(hql);
 		query.setParameter("maNXB", maNXB);

@@ -11,6 +11,7 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+    <script src='https://www.google.com/recaptcha/api.js?hl=vi'></script>
     <link rel = "stylesheet" href="files/css/accounts/login.css">
     <base href = "${pageContext.servletContext.contextPath}/">
 </head>
@@ -44,6 +45,10 @@
 					<form:input type = "password" path = "password"/>
 					<form:errors path = "password"/>
 				</p>
+				<div class="g-recaptcha" data-sitekey="6Lf_sdkZAAAAABI29FKzToJ0CasW0jgey-xxvcD6"></div>
+				<p>
+					${check_fail}
+				</p>
 				<p>
 					<input type = "submit" class = "btn" value = "Đăng nhập"/>
 				</p>
@@ -61,6 +66,7 @@
 						<input type = "email" name  = "email_forget">
 						${message}
 					</p>
+					
 					<p>
 						<!-- a href = "quen-mat-khau.htm" class = "btn">Tìm lại mật khẩu</a> -->
 						<input type = "submit" class = "btn" value = "Tìm lại mật khẩu">
@@ -72,6 +78,6 @@
 		
 	</div>
 
-	
+
 </body>
 </html>

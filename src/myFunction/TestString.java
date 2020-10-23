@@ -1,6 +1,28 @@
 package myFunction;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Vector;
+
 public class TestString {
+	public ArrayList<String> badword = new ArrayList<>();
+	
+	public TestString() {
+		init();
+	}
+	
+	public void init() {
+		this.badword.add("<script>");
+		this.badword.add("</script>");
+		this.badword.add("<");
+		this.badword.add("&lt;");
+		this.badword.add("&#60;");
+		this.badword.add(">");
+		this.badword.add("&gt;");
+		this.badword.add("&#62;");
+	}
+	
 	public int test_email(String email) {
 		String EMAIL_PATTERN = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@"
 	            + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";// cấu trúc email thông thường
@@ -14,8 +36,7 @@ public class TestString {
 	}
 	
 	public int test_pass(String password) {
-//		String pattern = "((?=.*d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!.#$@_+,?-]).{8,50})";
-		String pattern = "^[a-zA-Z0-9 ! # $ _ , ? + * @]{3,200}$";
+		String pattern = "^[a-zA-Z0-9!#$_,?+*@]{3,200}$";
 		if (password.length() == 0)
 			return 1;
 		if (password.length() < 3)
@@ -27,7 +48,16 @@ public class TestString {
 	}
 	
 	public int test_name(String name) {
-		String pattern = "^[a-zA-Z0-9 ! # _ \\- \\. \" \\s\\p{L}]{2,50}$";
+		String pattern = "^[a-zA-Z0-9!#_\\-\\.\"\'\\s\\p{L}]{1,50}$";
+		if (name.length() == 0)
+			return 1;
+		if (!name.matches(pattern))
+			return 2;
+		return 0;
+	}
+	
+	public int test_BookName(String name) {
+		String pattern = "^[a-zA-Z0-9=!#,_&\\-\\.\"\'\\s\\p{L}]{1,50}$";
 		if (name.length() == 0)
 			return 1;
 		if (!name.matches(pattern))
@@ -72,11 +102,37 @@ public class TestString {
 	}
 	
 	public int test_gia(String gia) {
-		String pattern = "^[0-9]{5,10}$";
+		String pattern = "^[0-9]{4,10}$";
 		if (gia.length() == 0)
 			return 1;
 		if (!gia.matches(pattern))
 			return 2;
 		return 0;
 	}
+	
+	//Loại bỏ các chữ/ ký tự nguy hiểm
+	public String filter_input(String str) {
+		String tmp1 = "";
+		String tmp2 = "";
+		String ret = str;
+		int i = 0;
+		int index = -1;
+		for (int j = 0; j < this.badword.size(); j++) {
+			do {
+				System.out.println(this.badword.get(j));
+				index = str.indexOf(this.badword.get(j));
+				System.out.println("Str: " + str);
+				System.out.println("index: " + index);
+				if(index >=0 ) {
+					tmp1 = str.substring(0, index);
+					tmp2 = str.substring(index + this.badword.get(j).length());
+					ret = tmp1.trim() + " " + tmp2.trim();
+					str = ret;
+				}
+			}while(index != -1);
+		}
+		return ret;
+	}
+	
+	
 }

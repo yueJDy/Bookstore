@@ -30,6 +30,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import myFunction.TestString;
+import myFunction.VerifyUtils;
+import nhanam.bean.UserInfo;
 import nhanam.entity.Book;
 import nhanam.entity.DonHang;
 import nhanam.entity.LoaiSach;
@@ -50,7 +52,10 @@ public class AdminController {
 	}
 	
 	@RequestMapping("admin/chuyenmuc/10/quan-ly-sach")
-	public String sach(ModelMap model) {
+	public String sach(ModelMap model, @RequestParam(value="eb", defaultValue = "0") int er) {
+		if (er == 1 ) {
+			model.addAttribute("error_book", true);
+		}
 		Session session = factory.getCurrentSession();
 		String hql = "FROM Book b WHERE b.trangthai=0";
 		Query query = session.createQuery(hql);
@@ -60,7 +65,10 @@ public class AdminController {
 	}
 	
 	@RequestMapping("admin/chuyenmuc/11/quan-ly-thanh-vien")
-	public String thanhvien(ModelMap model) {
+	public String thanhvien(ModelMap model, @RequestParam(value="eb", defaultValue = "0") int er) {
+		if (er == 1 ) {
+			model.addAttribute("error", true);
+		}
 		Session session = factory.getCurrentSession();
 		String hql = "FROM User u WHERE u.trangthai=0";
 		Query query = session.createQuery(hql);
@@ -70,7 +78,10 @@ public class AdminController {
 	}
 	
 	@RequestMapping("admin/chuyenmuc/12/quan-ly-NXB")
-	public String nhaXB(ModelMap model) {
+	public String nhaXB(ModelMap model, @RequestParam(value="e", defaultValue = "0") int er) {
+		if(er == 1) {
+			model.addAttribute("error", true);
+		}
 		Session session = factory.getCurrentSession();
 		String hql = "FROM NhaXB n WHERE n.trangthai=0";
 		Query query = session.createQuery(hql);
@@ -81,12 +92,15 @@ public class AdminController {
 	}
 	
 	@RequestMapping("admin/chuyenmuc/13/quan-ly-tac-gia")
-	public String tacgia(ModelMap model) {
+	public String tacgia(ModelMap model, @RequestParam(value="e", defaultValue = "0") int er) {
+		if(er == 1) {
+			model.addAttribute("error", true);
+		}
 		Session session = factory.getCurrentSession();
 		String hql = "FROM TacGia t WHERE t.trangthai=0 ORDER BY t.tenTG";
 		Query query = session.createQuery(hql);
 		List<TacGia> list = query.list();
-		model.addAttribute("tacgia", list);
+		model.addAttribute("TG", list);
 		return "admin/tacgia/index";
 	}
 	
@@ -100,11 +114,28 @@ public class AdminController {
 	}
 	
 	@RequestMapping(value = "admin/sach/addSL/{masach}", method = RequestMethod.POST)
-	public String addSPSach(@RequestParam(value = "soluong", defaultValue = "0") Integer soluong, @PathVariable("masach") String masach) {
+	public String addSPSach(ModelMap model , @RequestParam(value = "soluong", defaultValue = "0") Integer soluong, 
+			@ModelAttribute("g-recaptcha-response") String gRecaptcha,
+					@PathVariable("masach") String masach) {
+		boolean valid;
 		if (soluong > 0) {
+			System.out.println("số lượng thêm: " + soluong);
 			Session session = factory.openSession();
 			Transaction t = session.beginTransaction();
 			Book book = (Book) session.get(Book.class, masach);
+			if(book == null) {
+				model.addAttribute("eb", 1);
+				return "redirect:/admin/chuyenmuc/10/quan-ly-sach.htm";
+			}
+			
+			System.out.println("Recaptcha: " + gRecaptcha);
+			valid = VerifyUtils.verify(gRecaptcha);
+			if(!valid) {
+				model.addAttribute("book",book );
+				model.addAttribute("soluong", soluong);
+				model.addAttribute("check_fail", " *Vui lòng thực hiện xác thực để tiếp tục.");
+				return "admin/sach/themSP";
+			}
 			int add = soluong + book.getSLcon();
 			book.setSLcon(add);
 			try {
@@ -118,8 +149,8 @@ public class AdminController {
 			finally {
 				session.close();
 			}
-			
 		}
+		
 		return "redirect:/admin/chuyenmuc/10/quan-ly-sach.htm";
 	}
 	
@@ -156,7 +187,7 @@ public class AdminController {
 					break;
 				}
 				case 2:{
-					model.addAttribute("ten_fail", " *Tên sách chỉ gồm chữ, số và  ! # _ - . ");
+					model.addAttribute("ten_fail", " *Tên sách chỉ gồm chữ, số và & ! # _ - . ");
 					break;
 				}
 			}
@@ -197,19 +228,15 @@ public class AdminController {
 			model.addAttribute("date_fail", " *Vui lòng nhập ngày xuất bản");
 		}
 		
-		int test_gt = testinput.test_str(book.getGioithieu());
-		if (test_gt != 0) {
+		
+		if (book.getGioithieu().length() == 0) {
 			test = false;
-			switch(test_gt) {
-				case 1:{
-					model.addAttribute("gioithieu_fail", " *Vui lòng nhập giới thiệu sách");
-					break;
-				}
-				case 2:{
-					model.addAttribute("gioithieu_fail", " *Chỉ gồm các ký tự chữ, số và !#$\".,");
-					break;
-				}
-			}
+			model.addAttribute("gioithieu_fail", " *Vui lòng nhập giới thiệu sách");
+		}
+		else {
+			String tmp = testinput.filter_input(book.getGioithieu());
+			book.setGioithieu(tmp);
+			
 		}
 					
 		if (book.getGia() != null) {
@@ -217,12 +244,8 @@ public class AdminController {
 			if (test_gia != 0) {
 				test = false;
 				switch(test_gia) {
-					case 1:{
-						model.addAttribute("gia_fail", " *Vui lòng nhập đơn giá sách");
-						break;
-					}
 					case 2:{
-						model.addAttribute("gia_fail", " *Giá sách chỉ gồm các số và có ít nhất 5 chữ số ( VD: 15000)");
+						model.addAttribute("gia_fail", " *Giá sách chỉ gồm các số và có ít nhất 4 chữ số ( VD: 15000)");
 						break;
 					}
 				}
@@ -323,6 +346,10 @@ public class AdminController {
 			model.addAttribute("ngay", date);
 			return "admin/sach/edit";
 		}
+		if(list.size() == 0) {
+			model.addAttribute("eb", 1);
+			return "redirect:/admin/chuyenmuc/10/quan-ly-sach.htm";
+		}
 		return "redirect:/admin/chuyenmuc/10/quan-ly-sach.htm";
 	}
 	
@@ -330,10 +357,16 @@ public class AdminController {
 	public String editSach2(@ModelAttribute("book") Book book, 
 					@RequestParam(value = "ngay", defaultValue = "")String ngay, 
 					@PathVariable("masach") String masach,
+					@ModelAttribute("g-recaptcha-response") String gRecaptcha,
 					ModelMap model) {
+		boolean valid;
 		Session session = factory.openSession();
 		Transaction t = session.beginTransaction();
-		Book updateB = (Book) session.get(Book.class, masach); 		
+		Book updateB = (Book) session.get(Book.class, masach);
+		if(updateB == null) {
+			model.addAttribute("eb", 1);
+			return "redirect:/admin/chuyenmuc/10/quan-ly-sach.htm";
+		}
 		
 		System.out.println("gioi thieu: " + book.getGioithieu() + " " + book.getGioithieu().length());
 		System.out.println("so luong: " +book.getSLcon());
@@ -369,18 +402,8 @@ public class AdminController {
 		}
 		
 		if (book.getGioithieu() != null) {
-			int test_gt = testinput.test_str(book.getGioithieu());
-			if (test_gt > 1) {
-				test = false;
-				switch(test_gt) {
-					case 2:{
-						model.addAttribute("gioithieu_fail", " *Chỉ gồm các ký tự chữ, số, ! # $ _ - \" '. , : và khoảng trắng");
-						break;
-					}
-				}
-			}
-			else
-				updateB.setGioithieu(book.getGioithieu());
+			String tmp = testinput.filter_input(book.getGioithieu());
+			updateB.setGioithieu(book.getGioithieu());
 		}
 		
 //		System.out.println(book.getLoaisach());
@@ -392,22 +415,34 @@ public class AdminController {
 		if (book.getNhaXB() != null)
 			updateB.setNhaXB(book.getNhaXB());
 		if (test) {
-			try {
-				session.update(updateB);
-				t.commit();
+			System.out.println("Recaptcha: " + gRecaptcha);
+			valid = VerifyUtils.verify(gRecaptcha);
+			if(!valid) {
+				model.addAttribute("book",updateB);
+				LocalDate ld = new java.sql.Date(updateB.getNgayXB().getTime()).toLocalDate();
+				String date = ld.toString();
+				model.addAttribute("ngay", date);
+				model.addAttribute("check_fail", " *Vui lòng thực hiện xác thực để tiếp tục.");
+				return "admin/sach/edit";
 			}
-			catch(Exception ex) {
-				t.rollback();
-				System.out.println("Update book fail!");
+			else {
+				try {
+					session.update(updateB);
+					t.commit();
+				}
+				catch(Exception ex) {
+					t.rollback();
+					System.out.println("Update book fail!");
+				}
+				finally {
+					session.close();
+				}
+				return "redirect:/admin/chuyenmuc/10/quan-ly-sach.htm";
+//				return "home";
 			}
-			finally {
-				session.close();
-			}
-			return "redirect:/admin/chuyenmuc/10/quan-ly-sach.htm";
-//			return "home";
 		}
 		else {
-			session.refresh(updateB);
+//			session.refresh(updateB);
 			model.addAttribute("book", updateB);
 			LocalDate ld = new java.sql.Date(updateB.getNgayXB().getTime()).toLocalDate();
 			String date = ld.toString();
@@ -417,27 +452,41 @@ public class AdminController {
 	}
 	
 	@RequestMapping(value = "admin/sach/{masach}", params = "delete")
-	public String deleteSach(@PathVariable("masach") String masach) {
+	public String deleteSach(ModelMap model, @PathVariable("masach") String masach, 
+					@ModelAttribute("password") String password, 
+					HttpSession ss) {
 		Session session = factory.openSession();
 		Transaction t = session.beginTransaction();
 		System.out.println(masach);
 		Book book = (Book) session.get(Book.class, masach);
-		book.setTrangthai(true);
-		try {
-//			session.delete(book);
-			session.update(book);
-			t.commit();
-			System.out.println("xoá thành công!");
+		if(book == null) {
+			model.addAttribute("eb", 1);
+			return "redirect:/admin/chuyenmuc/10/quan-ly-sach.htm";
 		}
-		catch(Exception ex) {
-			t.rollback();
-			System.out.println("Xoá thất bại!");
+		
+		UserInfo user = (UserInfo)ss.getAttribute("user");
+		if(password.equals(user.getPassword())) {
+			book.setTrangthai(true);
+			try {
+//				session.delete(book);
+				session.update(book);
+				t.commit();
+				System.out.println("xoá thành công!");
+			}
+			catch(Exception ex) {
+				t.rollback();
+				System.out.println("Xoá thất bại!");
+			}
+			finally {
+				session.close();
+			}
+			return "redirect:/admin/chuyenmuc/10/quan-ly-sach.htm";
+//			return "home";
 		}
-		finally {
-			session.close();
+		else {
+			model.addAttribute("message", "Mật khẩu xác thực không chính xác");
+			return sach(model, 0);
 		}
-		return "redirect:/admin/chuyenmuc/10/quan-ly-sach.htm";
-//		return "home";
 	}
 	
 	@RequestMapping("admin/sach/luu-tru")
@@ -455,6 +504,10 @@ public class AdminController {
 		Session session = factory.openSession();
 		Transaction t = session.beginTransaction();
 		Book book = (Book) session.get(Book.class, masach);
+		if(book == null) {
+			model.addAttribute("eb", 1);
+			return "redirect:/admin/chuyenmuc/10/quan-ly-sach.htm";
+		}
 		book.setTrangthai(false);
 		try {
 			session.update(book);
@@ -480,8 +533,9 @@ public class AdminController {
 	}
 	
 	@RequestMapping(value = "admin/tacgia/insert", method = RequestMethod.POST)
-	public String insertTG2(@ModelAttribute("tacgia") TacGia tacgia, ModelMap model, HttpSession ss){
-		Boolean test = true;
+	public String insertTG2(@ModelAttribute("tacgia") TacGia tacgia, @ModelAttribute("g-recaptcha-response") String gRecaptcha, ModelMap model, HttpSession ss){
+		boolean test = true;
+		boolean valid;
 		String ten = tacgia.getTenTG();
 		ten = ten.toLowerCase();
 		ten = ten.trim();
@@ -515,21 +569,9 @@ public class AdminController {
 			}
 		}
 		
-		int test_gt = testinput.test_str(tacgia.getGioiThieu());
-		if (test_gt > 1) {
-			test = false;
-			switch(test_gt) {
-				case 1:{
-					model.addAttribute("gt_fail", " *Vui lòng nhập giới thiệu sách");
-					break;
-				}
-				case 2:{
-					model.addAttribute("gt_fail", " *Chỉ gồm các ký tự chữ, số, ! # $ _ - \" '. , : và khoảng trắng");
-					break;
-				}
-			}
-		}
 		
+		String tmp = testinput.filter_input(tacgia.getGioiThieu());
+		tacgia.setGioiThieu(tmp);
 		if (test) {
 			tacgia.setTenTG(ten);
 			String hql2 = "FROM TacGia";
@@ -546,6 +588,13 @@ public class AdminController {
 			if (gt.isEmpty()) {
 				tacgia.setGioiThieu("  ");
 			}
+			System.out.println("Recaptcha: " + gRecaptcha);
+			valid = VerifyUtils.verify(gRecaptcha);
+			if(!valid) {
+				model.addAttribute("tacgia",tacgia);
+				model.addAttribute("check_fail", " *Vui lòng thực hiện xác thực để tiếp tục.");
+				return "admin/tacgia/insert";
+			}
 			try {
 				session.save(tacgia);
 				t.commit();
@@ -557,8 +606,8 @@ public class AdminController {
 			finally {
 				session.close();
 			}
-//			return "redirect:/admin/chuyenmuc/13/quan-ly-tac-gia.htm";
-			return "home";
+			return "redirect:/admin/chuyenmuc/13/quan-ly-tac-gia.htm";
+//			return "home";
 		}
 		else {
 			model.addAttribute("tacgia", new TacGia());
@@ -570,6 +619,10 @@ public class AdminController {
 	public String editTG(ModelMap model, @PathVariable("maTG") String maTG) {
 		Session session = factory.getCurrentSession();
 		TacGia t = (TacGia)session.get(TacGia.class, maTG);
+		if(t == null) {
+			model.addAttribute("e", 1);
+			return "redirect:/admin/chuyenmuc/13/quan-ly-tac-gia.htm";
+		}
 		model.addAttribute("tacgia", t);
 		return "admin/tacgia/edit";
 	}
@@ -577,29 +630,34 @@ public class AdminController {
 	@RequestMapping(value = "admin/tacgia/edit/{maTG}", method = RequestMethod.POST)
 	public String editTG2(@PathVariable("maTG") String maTG, 
 				@ModelAttribute("tacgia")TacGia tacgia,
+				@ModelAttribute("g-recaptcha-response") String gRecaptcha,
 				ModelMap model) {
+		boolean valid;
 		Session session = factory.openSession();
 		Transaction t = session.beginTransaction();
 		TacGia updateTG = (TacGia) session.get(TacGia.class, maTG);
+		if(updateTG == null) {
+			model.addAttribute("e", 1);
+			return "redirect:/admin/chuyenmuc/13/quan-ly-tac-gia.htm";
+		}
 		String gt = tacgia.getGioiThieu();
 //			System.out.println(tacgia.getMaTG());
 //			System.out.println(tacgia.getTenTG());
 //			System.out.println(gt);
 		Boolean test = true;
 		if (!gt.isEmpty()) {
-			int test_gt = testinput.test_str(tacgia.getGioiThieu());
-			if (test_gt > 1) {
-				test = false;
-				switch(test_gt) {
-					case 2:{
-						model.addAttribute("gt_fail", " *Chỉ gồm các ký tự chữ, số, ! # $ _ - \" '. , : và khoảng trắng");
-						break;
-					}
-				}
-			}	
+			String tmp = testinput.filter_input(gt);
+			gt = tmp;
 		}
 		if(test) {
 			updateTG.setGioiThieu(gt);
+			System.out.println("Recaptcha: " + gRecaptcha);
+			valid = VerifyUtils.verify(gRecaptcha);
+			if(!valid) {
+				model.addAttribute("check_fail", " *Vui lòng thực hiện xác thực để tiếp tục.");
+				model.addAttribute("tacgia", updateTG);
+				return "admin/tacgia/edit";
+			}
 			try {
 				session.save(updateTG);
 				t.commit();
@@ -622,25 +680,38 @@ public class AdminController {
 	
 	
 	@RequestMapping(value = "admin/tacgia/{maTG}", params = "delete")
-	public String deleteTG(@PathVariable("maTG") String maTG) {
+	public String deleteTG(ModelMap model, @PathVariable("maTG") String maTG, @ModelAttribute("password") String password, HttpSession ss) {
+		
 		Session session = factory.openSession();
 		Transaction t = session.beginTransaction();
 		System.out.println(maTG);
 		TacGia tacgia = (TacGia) session.get(TacGia.class, maTG);
-		tacgia.setTrangthai(true);
-		try {
-			session.update(tacgia);
-			t.commit();
+		if(t == null) {
+			model.addAttribute("e", 1);
+			return "redirect:/admin/chuyenmuc/13/quan-ly-tac-gia.htm";
 		}
-		catch(Exception ex) {
-			t.rollback();
-			System.out.println("Delete TG fail!");
+		UserInfo user = (UserInfo) ss.getAttribute("user");
+		if(password.equals(user.getPassword())) {
+			tacgia.setTrangthai(true);
+			try {
+				session.update(tacgia);
+				t.commit();
+			}
+			catch(Exception ex) {
+				t.rollback();
+				System.out.println("Delete TG fail!");
+			}
+			finally {
+				session.close();
+			}
+			return "redirect:/admin/chuyenmuc/13/quan-ly-tac-gia.htm";
+//			return "home";
 		}
-		finally {
-			session.close();
+		else {
+			model.addAttribute("message", "Mật khẩu xác thực không đúng.");
+			return "admin/tacgia/index";
 		}
-		return "redirect:/admin/chuyenmuc/13/quan-ly-tac-gia.htm";
-//		return "home";
+		
 	}
 	
 	@RequestMapping("admin/tacgia/luu-tru")
@@ -658,6 +729,10 @@ public class AdminController {
 		Session session = factory.openSession();
 		Transaction t = session.beginTransaction();
 		TacGia tg = (TacGia) session.get(TacGia.class, maTG);
+		if(t == null) {
+			model.addAttribute("e", 1);
+			return "redirect:/admin/chuyenmuc/13/quan-ly-tac-gia.htm";
+		}
 		tg.setTrangthai(false);
 		try {
 			session.update(tg);
@@ -676,10 +751,11 @@ public class AdminController {
 	//---------------------------- NHÀ XUẤT BẢN ----------------------------------
 		
 	@RequestMapping(value = "admin/nxb/insert", method = RequestMethod.POST)
-	public String insertNXB2(@ModelAttribute("nxb") NhaXB nxb, ModelMap model, HttpSession ss){
+	public String insertNXB2(@ModelAttribute("nxb") NhaXB nxb, @ModelAttribute("g-recaptcha-response") String gRecaptcha, ModelMap model, HttpSession ss){
 		Session session = factory.openSession();
 		Transaction t = session.beginTransaction();
 		
+		boolean valid;
 		Boolean test = true;
 		String ten = nxb.getTenNXB();
 		ten = ten.toLowerCase();
@@ -699,7 +775,7 @@ public class AdminController {
 			}
 		}
 		else {
-			// Kiem tra ten Tac Gia da co trong CSDL chua
+			// Kiem tra ten NXB da co trong CSDL chua
 			String hql = "FROM NhaXB n WHERE n.tenNXB=:ten";
 			Query query = session.createQuery(hql);
 			query.setParameter("ten", ten);
@@ -710,6 +786,13 @@ public class AdminController {
 			}
 		}
 		if(test) {
+			System.out.println("Recaptcha: " + gRecaptcha);
+			valid = VerifyUtils.verify(gRecaptcha);
+			if(!valid) {
+				model.addAttribute("nxb", nxb);
+				model.addAttribute("check_fail", " *Vui lòng thực hiện xác thực để tiếp tục.");
+				return "admin/NXB/index";
+			}
 			nxb.setTenNXB(ten);
 			String hql2 = "FROM NhaXB";
 			Query query2 = session.createQuery(hql2);
@@ -738,39 +821,56 @@ public class AdminController {
 	}
 	
 	@RequestMapping(value = "admin/nxb/{maNXB}", params = "delete")
-	public String deleteNXB(@PathVariable("maNXB") String maNXB) {
+	public String deleteNXB(ModelMap model, @ModelAttribute("passwrord") String password, 
+				@PathVariable("maNXB") String maNXB,
+				HttpSession ss) {
+		boolean valid;
 		Session session = factory.openSession();
 		Transaction t = session.beginTransaction();
 		System.out.println(maNXB);
 		NhaXB nxb = (NhaXB) session.get(NhaXB.class, maNXB);
+		if(nxb == null) {
+			model.addAttribute("e", 1);
+			return "redirect:/admin/chuyenmuc/12/quan-ly-NXB.htm";
+		}
 		
-		String hql = "FROM Book b WHERE b.nhaXB.maNXB=:maNXB";
-		Query query = session.createQuery(hql);
-		query.setParameter("maNXB", maNXB);
-		List<Book> list = query.list();
-		if (list.size() == 0) {
-			try {
-				session.delete(nxb);
-				t.commit();
+		UserInfo user = (UserInfo) ss.getAttribute("user");
+		if(password.equals(user.getPassword())) {
+			String hql = "FROM Book b WHERE b.nhaXB.maNXB=:maNXB";
+			Query query = session.createQuery(hql);
+			query.setParameter("maNXB", maNXB);
+			List<Book> list = query.list();
+			if (list.size() == 0) {
+				try {
+					session.delete(nxb);
+					t.commit();
+				}
+				catch(Exception ex) {
+					t.rollback();
+					System.out.println("Delete NXB fail!");
+				}
 			}
-			catch(Exception ex) {
-				t.rollback();
-				System.out.println("Delete NXB fail!");
+			else {
+				try {
+					nxb.setTrangthai(true);
+					session.update(nxb);
+					t.commit();
+				}
+				catch(Exception ex) {
+					t.rollback();
+					System.out.println("Delete NXB fail!");
+				}
 			}
+			session.close();
+			return "redirect:/admin/chuyenmuc/12/quan-ly-NXB.htm";
 		}
 		else {
-			try {
-				nxb.setTrangthai(true);
-				session.update(nxb);
-				t.commit();
-			}
-			catch(Exception ex) {
-				t.rollback();
-				System.out.println("Delete NXB fail!");
-			}
+			model.addAttribute("message", "Mật khẩu xác thực không đúng.");
+			model.addAttribute("nxb", new NhaXB());
+			return "admin/NXB/index";
 		}
-		session.close();
-		return "redirect:/admin/chuyenmuc/12/quan-ly-NXB.htm";
+		
+		
 //			return "home";
 	}
 	
@@ -789,6 +889,10 @@ public class AdminController {
 		Session session = factory.openSession();
 		Transaction t = session.beginTransaction();
 		NhaXB nxb = (NhaXB) session.get(NhaXB.class, maNXB);
+		if(nxb == null) {
+			model.addAttribute("e", 1);
+			return "redirect:/admin/chuyenmuc/12/quan-ly-NXB.htm";
+		}
 		nxb.setTrangthai(false);
 		try {
 			session.update(nxb);
@@ -814,10 +918,11 @@ public class AdminController {
 	}
 	
 	@RequestMapping(value = "admin/user/insert", method = RequestMethod.POST)
-	public String insertUser2(@ModelAttribute("user") User user, ModelMap model) {
+	public String insertUser2(@ModelAttribute("user") User user, @ModelAttribute("g-recaptcha-response") String gRecaptcha, ModelMap model) {
 		Session session = factory.openSession();
 		Transaction t = session.beginTransaction();
 		Boolean test = true;
+		boolean valid;
 		int test_email = testinput.test_email(user.getEmail());
 		if (test_email != 0) {
 			test = false;
@@ -862,6 +967,13 @@ public class AdminController {
 			model.addAttribute("isAdmin_fail", " *Vui lòng chọn loại tài khoản!");
 		}
 		if (test) {
+			System.out.println("Recaptcha: " + gRecaptcha);
+			valid = VerifyUtils.verify(gRecaptcha);
+			if(!valid) {
+				model.addAttribute("user", user);
+				model.addAttribute("check_fail", " *Vui lòng thực hiện xác thực để tiếp tục.");
+				return "admin/taikhoan/insert";
+			}
 			user.setPassword("user123456");
 			user.setVerify(false);
 			user.setTrangthai(false);
@@ -897,16 +1009,34 @@ public class AdminController {
 	public String editUser1(ModelMap model, @PathVariable("email") String email) {
 		Session session = factory.getCurrentSession();
 		User user = (User) session.get(User.class, email);
+		if(user == null) {
+			model.addAttribute("e", 1);
+			return "redirect:/admin/chuyenmuc/11/quan-ly-thanh-vien.htm";
+		}
 		model.addAttribute("user", user);
 		return "admin/taikhoan/edit";
 	}
 	
 	@RequestMapping(value = "admin/user/edit/{email}", method = RequestMethod.POST)
-	public String editUser2(@PathVariable("email") String email, @ModelAttribute("user") User user) {
+	public String editUser2(ModelMap model, @PathVariable("email") String email, 
+					@ModelAttribute("user") User user, 
+					@ModelAttribute("g-recaptcha-response") String gRecaptcha) {
+		boolean valid;
 		Session session = factory.openSession();
 		Transaction t = session.beginTransaction();
 		User updateU = (User) session.get(User.class, email);
+		if(updateU == null) {
+			model.addAttribute("e", 1);
+			return "redirect:/admin/chuyenmuc/11/quan-ly-thanh-vien.htm";
+		}
 		updateU.setIsAdmin(user.getIsAdmin());
+		System.out.println("Recaptcha: " + gRecaptcha);
+		valid = VerifyUtils.verify(gRecaptcha);
+		if(!valid) {
+			model.addAttribute("user", updateU);
+			model.addAttribute("check_fail", " *Vui lòng thực hiện xác thực để tiếp tục.");
+			return "admin/taikhoan/edit";
+		}
 		try {
 			session.update(updateU);
 			t.commit();
@@ -923,43 +1053,56 @@ public class AdminController {
 	}
 	
 	@RequestMapping(value = "admin/user/{email}", params = "delete")
-	public String deleteUser(@PathVariable("email")String email) {
+	public String deleteUser(ModelMap model, @PathVariable("email")String email,
+				@ModelAttribute("password") String password,
+				HttpSession ss) {
 		Session session = factory.openSession();
 		Transaction t = session.beginTransaction();
 		User user = (User) session.get(User.class, email);
-		String hql = "FROM DonHang d WHERE d.user.email=:email";
-		Query query = session.createQuery(hql);
-		query.setParameter("email", email);
-		List<DonHang> list = query.list();
-		if (list.size() == 0) {
-			try {
-				session.delete(user);
-				t.commit();
+		if(user == null) {
+			model.addAttribute("e", 1);
+			return "redirect:/admin/chuyenmuc/11/quan-ly-thanh-vien.htm";
+		}
+		UserInfo userinfo = (UserInfo)ss.getAttribute("user");
+		if(password.equals(userinfo.getPassword())) {
+			String hql = "FROM DonHang d WHERE d.user.email=:email";
+			Query query = session.createQuery(hql);
+			query.setParameter("email", email);
+			List<DonHang> list = query.list();
+			if (list.size() == 0) {
+				try {
+					session.delete(user);
+					t.commit();
+				}
+				catch(Exception ex){
+					t.rollback();
+					System.out.println("Delete user fail.");
+				}
+				finally {
+					session.close();
+				}
+				
 			}
-			catch(Exception ex){
-				t.rollback();
-				System.out.println("Delete user fail.");
+			else {
+				user.setTrangthai(true);
+				try {
+					session.update(user);
+					t.commit();
+				}
+				catch(Exception ex) {
+					t.rollback();
+					System.out.println("Delete User fail");
+				}
+				finally {
+					session.close();
+				}
 			}
-			finally {
-				session.close();
-			}
-			
+			return "redirect:/admin/chuyenmuc/11/quan-ly-thanh-vien.htm";
 		}
 		else {
-			user.setTrangthai(true);
-			try {
-				session.update(user);
-				t.commit();
-			}
-			catch(Exception ex) {
-				t.rollback();
-				System.out.println("Delete User fail");
-			}
-			finally {
-				session.close();
-			}
+			model.addAttribute("message", "Mật khẩu xác thực không đúng.");
+			return "admin/taikhoan/index";
 		}
-		return "redirect:/admin/chuyenmuc/11/quan-ly-thanh-vien.htm";
 	}
 	
 	@RequestMapping("admin/user/luu-tru")
@@ -977,6 +1120,10 @@ public class AdminController {
 		Session session = factory.openSession();
 		Transaction t = session.beginTransaction();
 		User user = (User) session.get(User.class, email);
+		if(user == null) {
+			model.addAttribute("e", 1);
+			return "redirect:/admin/chuyenmuc/11/quan-ly-thanh-vien.htm";
+		}
 		user.setTrangthai(false);
 		try {
 			session.update(user);
@@ -993,6 +1140,15 @@ public class AdminController {
 	}
 	
 	//----------------------------------------------------------------------------------------------------
+	
+	@ModelAttribute("USERS")
+	public List<User> getUsers(){
+		Session session = factory.getCurrentSession();
+		String hql = "FROM User t WHERE t.trangthai=0 ";
+		Query query = session.createQuery(hql);
+		List<User> list = query.list();
+		return list;
+	}
 	
 	@ModelAttribute("LS")
 	public List<LoaiSach> getLS(){
