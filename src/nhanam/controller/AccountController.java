@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import myFunction.HashSHA1;
 import myFunction.RandomFunc;
 import myFunction.TestString;
 import myFunction.VerifyUtils;
@@ -198,13 +197,11 @@ public class AccountController {
 			}
 		}	
 		if (test) {
-			String encrypt = HashSHA1.encr(user.getPassword());
-			System.out.println(encrypt);
 			Session s = factory.getCurrentSession();
 			String hql = "FROM User u WHERE u.email=:email AND u.password=:password";
 			Query query = s.createQuery(hql);
 			query.setParameter("email", user.getEmail());
-			query.setParameter("password", encrypt);
+			query.setParameter("password", user.getPassword());
 			List<User> list = query.list();
 			if (list.size() != 0) {
 				System.out.println("Recaptcha: " + gRecaptcha);
